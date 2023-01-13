@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package reconditematter.v1;
+
+option go_package = "github.com/reconditematter/go-reconditematter/gen/proto/go/reconditematter/v1;reconditematterv1";
+
+message RandomNamesRequest {
+  uint32 count = 1;
+}
+
+message HumanName {
+  string family = 1;
+  string given = 2;
+  string gender = 3;
+}
+
+message RandomNamesResponse {
+  uint32 count = 1;
+  repeated HumanName names = 2;
+}
+
+service ReconditeMatterService {
+  rpc RandomNames(RandomNamesRequest) returns (RandomNamesResponse);
+}
