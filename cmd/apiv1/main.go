@@ -8,8 +8,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/reconditematter/go-reconditematter/gen/proto/go/reconditematter/v1"
 	"github.com/reconditematter/go-reconditematter/gen/proto/go/reconditematter/v1/reconditematterv1connect"
@@ -36,10 +34,13 @@ func (s *ReconditeMatterServer) RandomNames(
 	ctx context.Context,
 	req *connect.Request[reconditematterv1.RandomNamesRequest],
 ) (*connect.Response[reconditematterv1.RandomNamesResponse], error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	count := req.Msg.GetCount()
 	result, err := randomnames.Generate(uint(count))
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "`count` cannot be greater than 1000")
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	resp := &reconditematterv1.RandomNamesResponse{}

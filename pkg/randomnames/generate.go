@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type HumanName struct {
 func Generate(count uint) ([]HumanName, error) {
 	const maxCount = 1000
 	if count > maxCount {
-		return nil, errors.New("randomnames.Generate: invalid count")
+		return nil, errors.New("randomnames.Generate: invalid count: " + strconv.FormatUint(uint64(count), 10))
 	}
 
 	names := make(map[[2]string]string) // [family,given] -> gender
