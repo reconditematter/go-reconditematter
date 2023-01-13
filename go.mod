@@ -1,4 +1,4 @@
-module reconditematter
+module github.com/reconditematter/go-reconditematter
 
 go 1.19
 
