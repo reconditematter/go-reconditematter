@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"golang.org/x/net/http2"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/reconditematter/go-reconditematter/gen/proto/go/reconditematter/v1"
 	"github.com/reconditematter/go-reconditematter/gen/proto/go/reconditematter/v1/reconditematterv1connect"
+	"github.com/reconditematter/go-reconditematter/pkg/geo"
 	"github.com/reconditematter/go-reconditematter/pkg/randomnames"
 )
 
@@ -60,5 +63,24 @@ func (s *ReconditeMatterServer) FibonacciPoints(
 	ctx context.Context,
 	req *connect.Request[reconditematterv1.FibonacciPointsRequest],
 ) (*connect.Response[reconditematterv1.FibonacciPointsResponse], error) {
-	return nil, nil
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	const maxCount = 10001
+	count := req.Msg.GetCount()
+	if count > maxCount {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("FibonacciPoints: invalid count: "+strconv.FormatUint(uint64(count), 10)))
+	}
+
+	result := geo.FibonacciPoints(uint(count) / 2)
+
+	resp := &reconditematterv1.FibonacciPointsResponse{}
+	resp.Count = uint32(len(result))
+	resp.Points = make([]*reconditematterv1.GeoPoint, len(result))
+	for k := range resp.Points {
+		resp.Points[k] = &reconditematterv1.GeoPoint{Lat: result[k].Lat, Lon: result[k].Lon}
+	}
+	return connect.NewResponse(resp), nil
 }
