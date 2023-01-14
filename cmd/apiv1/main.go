@@ -20,9 +20,9 @@ func main() {
 	mux := http.NewServeMux()
 	path, handler := reconditematterv1connect.NewReconditeMatterServiceHandler(server)
 	mux.Handle(path, handler)
-	log.Println("ReconditeMatterServer started", listen, path)
+	log.Println("apiv1 started:", listen, path)
 	if err := http.ListenAndServe(listen, h2c.NewHandler(mux, &http2.Server{})); err != nil {
-		log.Fatalf("ReconditeMatterServer error %w\n", err)
+		log.Fatalf("failed ListenAndServe: %w\n", err)
 	}
 }
 
@@ -54,4 +54,11 @@ func (s *ReconditeMatterServer) RandomNames(
 		}
 	}
 	return connect.NewResponse(resp), nil
+}
+
+func (s *ReconditeMatterServer) FibonacciPoints(
+	ctx context.Context,
+	req *connect.Request[reconditematterv1.FibonacciPointsRequest],
+) (*connect.Response[reconditematterv1.FibonacciPointsResponse], error) {
+	return nil, nil
 }
