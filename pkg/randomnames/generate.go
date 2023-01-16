@@ -1,10 +1,8 @@
 package randomnames
 
 import (
-	"errors"
 	"math"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -16,11 +14,10 @@ type HumanName struct {
 }
 
 // Generate generates `count` random human names.
-// It returns an error if `count` is greater than `maxCount` (1000).
-func Generate(count uint) ([]HumanName, error) {
+func Generate(count uint) []HumanName {
 	const maxCount = 1000
 	if count > maxCount {
-		return nil, errors.New("randomnames.Generate: invalid count: " + strconv.FormatUint(uint64(count), 10))
+		count = maxCount
 	}
 
 	names := make(map[[2]string]string) // [family,given] -> gender
@@ -43,5 +40,5 @@ func Generate(count uint) ([]HumanName, error) {
 		hnames = append(hnames, hn)
 	}
 
-	return hnames, nil
+	return hnames
 }

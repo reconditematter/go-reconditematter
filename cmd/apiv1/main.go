@@ -40,11 +40,14 @@ func (s *ReconditeMatterServer) RandomNames(
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	const maxCount = 1000
 	count := req.Msg.GetCount()
-	result, err := randomnames.Generate(uint(count))
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	if count > maxCount {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("RandomNames: invalid count: "+strconv.FormatUint(uint64(count), 10)))
 	}
+	result := randomnames.Generate(uint(count))
 
 	resp := &reconditematterv1.RandomNamesResponse{}
 	resp.Count = uint32(len(result))
