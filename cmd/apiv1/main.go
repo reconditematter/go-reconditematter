@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/google/uuid"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -21,12 +22,37 @@ func main() {
 	listen := "127.0.0.1:8080"
 	server := &ReconditeMatterServer{}
 	mux := http.NewServeMux()
-	path, handler := reconditematterv1connect.NewReconditeMatterServiceHandler(server)
+	path, handler := reconditematterv1connect.NewReconditeMatterServiceHandler(server,
+		connect.WithInterceptors(NewInterceptor()))
 	mux.Handle(path, handler)
-	log.Println("apiv1 started:", listen, path)
+	log.Println("apiv1", listen, path)
 	if err := http.ListenAndServe(listen, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		log.Fatalf("failed ListenAndServe: %w\n", err)
 	}
+}
+
+func NewInterceptor() connect.UnaryInterceptorFunc {
+	const ReqID = "X-Request-Id"
+	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			if !req.Spec().IsClient {
+				uuid := uuid.New().String()
+				req.Header().Set(ReqID, uuid)
+				log.Printf("%s %s %q\n", uuid, req.Spec().Procedure, req.Any())
+			}
+
+			resp, err := next(ctx, req)
+			resp.Header().Set(ReqID, req.Header().Get(ReqID))
+
+			if err != nil {
+				log.Printf("%s %q\n", req.Header().Get(ReqID), err.Error())
+			} else {
+				log.Printf("%s OK\n", req.Header().Get(ReqID))
+			}
+			return resp, err
+		})
+	}
+	return connect.UnaryInterceptorFunc(interceptor)
 }
 
 type ReconditeMatterServer struct {
@@ -37,19 +63,20 @@ func (s *ReconditeMatterServer) RandomNames(
 	ctx context.Context,
 	req *connect.Request[reconditematterv1.RandomNamesRequest],
 ) (*connect.Response[reconditematterv1.RandomNamesResponse], error) {
+	resp := &reconditematterv1.RandomNamesResponse{}
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return connect.NewResponse(resp), err
 	}
 	const maxCount = 1000
 	count := req.Msg.GetCount()
 	if count > maxCount {
-		return nil, connect.NewError(
+		return connect.NewResponse(resp), connect.NewError(
 			connect.CodeInvalidArgument,
 			errors.New("RandomNames: invalid count: "+strconv.FormatUint(uint64(count), 10)))
 	}
+
 	result := randomnames.Generate(uint(count))
 
-	resp := &reconditematterv1.RandomNamesResponse{}
 	resp.Count = uint32(len(result))
 	resp.Names = make([]*reconditematterv1.HumanName, len(result))
 	for k := range resp.Names {
@@ -66,20 +93,20 @@ func (s *ReconditeMatterServer) FibonacciPoints(
 	ctx context.Context,
 	req *connect.Request[reconditematterv1.FibonacciPointsRequest],
 ) (*connect.Response[reconditematterv1.FibonacciPointsResponse], error) {
+	resp := &reconditematterv1.FibonacciPointsResponse{}
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return connect.NewResponse(resp), err
 	}
 	const maxCount = 10001
 	count := req.Msg.GetCount()
 	if count > maxCount {
-		return nil, connect.NewError(
+		return connect.NewResponse(resp), connect.NewError(
 			connect.CodeInvalidArgument,
 			errors.New("FibonacciPoints: invalid count: "+strconv.FormatUint(uint64(count), 10)))
 	}
 
 	result := geo.FibonacciPoints(uint(count) / 2)
 
-	resp := &reconditematterv1.FibonacciPointsResponse{}
 	resp.Count = uint32(len(result))
 	resp.Points = make([]*reconditematterv1.GeoPoint, len(result))
 	for k := range resp.Points {
