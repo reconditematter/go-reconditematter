@@ -35,19 +35,27 @@ func NewInterceptor() connect.UnaryInterceptorFunc {
 	const ReqID = "X-Request-Id"
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if !req.Spec().IsClient {
-				uuid := uuid.New().String()
-				req.Header().Set(ReqID, uuid)
-				log.Printf("%s %s %q\n", uuid, req.Spec().Procedure, req.Any())
+			reqid := req.Header().Get(ReqID)
+			if reqid == "" {
+				reqid = uuid.New().String()
+				req.Header().Set(ReqID, reqid)
+				log.Printf("%s %s %q\n", reqid, req.Spec().Procedure, req.Any())
 			}
 
 			resp, err := next(ctx, req)
-			resp.Header().Set(ReqID, req.Header().Get(ReqID))
 
 			if err != nil {
-				log.Printf("%s %q\n", req.Header().Get(ReqID), err.Error())
+				log.Printf("%s %q\n", reqid, err.Error())
+				var cerr *connect.Error
+				if errors.As(err, &cerr) {
+					cerr.Meta().Set(ReqID, reqid)
+					err = cerr
+				}
 			} else {
-				log.Printf("%s OK\n", req.Header().Get(ReqID))
+				log.Printf("%s OK\n", reqid)
+				if resp != nil {
+					resp.Header().Set(ReqID, req.Header().Get(ReqID))
+				}
 			}
 			return resp, err
 		})
@@ -65,12 +73,12 @@ func (s *ReconditeMatterServer) RandomNames(
 ) (*connect.Response[reconditematterv1.RandomNamesResponse], error) {
 	resp := &reconditematterv1.RandomNamesResponse{}
 	if err := ctx.Err(); err != nil {
-		return connect.NewResponse(resp), err
+		return nil, err
 	}
 	const maxCount = 1000
 	count := req.Msg.GetCount()
 	if count > maxCount {
-		return connect.NewResponse(resp), connect.NewError(
+		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
 			errors.New("RandomNames: invalid count: "+strconv.FormatUint(uint64(count), 10)))
 	}
@@ -95,12 +103,12 @@ func (s *ReconditeMatterServer) FibonacciPoints(
 ) (*connect.Response[reconditematterv1.FibonacciPointsResponse], error) {
 	resp := &reconditematterv1.FibonacciPointsResponse{}
 	if err := ctx.Err(); err != nil {
-		return connect.NewResponse(resp), err
+		return nil, err
 	}
 	const maxCount = 10001
 	count := req.Msg.GetCount()
 	if count > maxCount {
-		return connect.NewResponse(resp), connect.NewError(
+		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
 			errors.New("FibonacciPoints: invalid count: "+strconv.FormatUint(uint64(count), 10)))
 	}
