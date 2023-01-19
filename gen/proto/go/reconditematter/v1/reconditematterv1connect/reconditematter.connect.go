@@ -30,6 +30,7 @@ const (
 type ReconditeMatterServiceClient interface {
 	RandomNames(context.Context, *connect_go.Request[v1.RandomNamesRequest]) (*connect_go.Response[v1.RandomNamesResponse], error)
 	FibonacciPoints(context.Context, *connect_go.Request[v1.FibonacciPointsRequest]) (*connect_go.Response[v1.FibonacciPointsResponse], error)
+	FibonacciCell(context.Context, *connect_go.Request[v1.FibonacciCellRequest]) (*connect_go.Response[v1.FibonacciCellResponse], error)
 }
 
 // NewReconditeMatterServiceClient constructs a client for the
@@ -52,6 +53,11 @@ func NewReconditeMatterServiceClient(httpClient connect_go.HTTPClient, baseURL s
 			baseURL+"/reconditematter.v1.ReconditeMatterService/FibonacciPoints",
 			opts...,
 		),
+		fibonacciCell: connect_go.NewClient[v1.FibonacciCellRequest, v1.FibonacciCellResponse](
+			httpClient,
+			baseURL+"/reconditematter.v1.ReconditeMatterService/FibonacciCell",
+			opts...,
+		),
 	}
 }
 
@@ -59,6 +65,7 @@ func NewReconditeMatterServiceClient(httpClient connect_go.HTTPClient, baseURL s
 type reconditeMatterServiceClient struct {
 	randomNames     *connect_go.Client[v1.RandomNamesRequest, v1.RandomNamesResponse]
 	fibonacciPoints *connect_go.Client[v1.FibonacciPointsRequest, v1.FibonacciPointsResponse]
+	fibonacciCell   *connect_go.Client[v1.FibonacciCellRequest, v1.FibonacciCellResponse]
 }
 
 // RandomNames calls reconditematter.v1.ReconditeMatterService.RandomNames.
@@ -71,11 +78,17 @@ func (c *reconditeMatterServiceClient) FibonacciPoints(ctx context.Context, req 
 	return c.fibonacciPoints.CallUnary(ctx, req)
 }
 
+// FibonacciCell calls reconditematter.v1.ReconditeMatterService.FibonacciCell.
+func (c *reconditeMatterServiceClient) FibonacciCell(ctx context.Context, req *connect_go.Request[v1.FibonacciCellRequest]) (*connect_go.Response[v1.FibonacciCellResponse], error) {
+	return c.fibonacciCell.CallUnary(ctx, req)
+}
+
 // ReconditeMatterServiceHandler is an implementation of the
 // reconditematter.v1.ReconditeMatterService service.
 type ReconditeMatterServiceHandler interface {
 	RandomNames(context.Context, *connect_go.Request[v1.RandomNamesRequest]) (*connect_go.Response[v1.RandomNamesResponse], error)
 	FibonacciPoints(context.Context, *connect_go.Request[v1.FibonacciPointsRequest]) (*connect_go.Response[v1.FibonacciPointsResponse], error)
+	FibonacciCell(context.Context, *connect_go.Request[v1.FibonacciCellRequest]) (*connect_go.Response[v1.FibonacciCellResponse], error)
 }
 
 // NewReconditeMatterServiceHandler builds an HTTP handler from the service implementation. It
@@ -95,6 +108,11 @@ func NewReconditeMatterServiceHandler(svc ReconditeMatterServiceHandler, opts ..
 		svc.FibonacciPoints,
 		opts...,
 	))
+	mux.Handle("/reconditematter.v1.ReconditeMatterService/FibonacciCell", connect_go.NewUnaryHandler(
+		"/reconditematter.v1.ReconditeMatterService/FibonacciCell",
+		svc.FibonacciCell,
+		opts...,
+	))
 	return "/reconditematter.v1.ReconditeMatterService/", mux
 }
 
@@ -107,4 +125,8 @@ func (UnimplementedReconditeMatterServiceHandler) RandomNames(context.Context, *
 
 func (UnimplementedReconditeMatterServiceHandler) FibonacciPoints(context.Context, *connect_go.Request[v1.FibonacciPointsRequest]) (*connect_go.Response[v1.FibonacciPointsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("reconditematter.v1.ReconditeMatterService.FibonacciPoints is not implemented"))
+}
+
+func (UnimplementedReconditeMatterServiceHandler) FibonacciCell(context.Context, *connect_go.Request[v1.FibonacciCellRequest]) (*connect_go.Response[v1.FibonacciCellResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("reconditematter.v1.ReconditeMatterService.FibonacciCell is not implemented"))
 }

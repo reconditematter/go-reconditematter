@@ -33,7 +33,20 @@ message FibonacciPointsResponse {
   repeated GeoPoint points = 2;
 }
 
+message FibonacciCellRequest {
+  uint32 count = 1;
+  int32 lat_min = 2;
+  int32 lon_min = 3;
+}
+
+message FibonacciCellResponse {
+  uint32 count = 1;
+  GeoPoint min = 2;
+  repeated GeoPoint points = 3;
+}
+
 service ReconditeMatterService {
   rpc RandomNames(RandomNamesRequest) returns (RandomNamesResponse);
   rpc FibonacciPoints(FibonacciPointsRequest) returns (FibonacciPointsResponse);
+  rpc FibonacciCell(FibonacciCellRequest) returns (FibonacciCellResponse);
 }

@@ -122,3 +122,11 @@ func (s *ReconditeMatterServer) FibonacciPoints(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+func (s *ReconditeMatterServer) FibonacciCell(
+	ctx context.Context,
+	req *connect.Request[reconditematterv1.FibonacciCellRequest],
+) (*connect.Response[reconditematterv1.FibonacciCellResponse], error) {
+	resp := &reconditematterv1.FibonacciCellResponse{}
+	return connect.NewResponse(resp), nil
+}
