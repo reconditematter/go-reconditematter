@@ -54,7 +54,7 @@ func NewInterceptor() connect.UnaryInterceptorFunc {
 			} else {
 				log.Printf("%s OK\n", reqid)
 				if resp != nil {
-					resp.Header().Set(ReqID, req.Header().Get(ReqID))
+					resp.Header().Set(ReqID, reqid)
 				}
 			}
 			return resp, err
