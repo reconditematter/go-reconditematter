@@ -128,5 +128,35 @@ func (s *ReconditeMatterServer) FibonacciCell(
 	req *connect.Request[reconditematterv1.FibonacciCellRequest],
 ) (*connect.Response[reconditematterv1.FibonacciCellResponse], error) {
 	resp := &reconditematterv1.FibonacciCellResponse{}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	const maxCount = 10000
+	count := req.Msg.GetCount()
+	if count > maxCount {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("FibonacciCell: invalid count: "+strconv.FormatUint(uint64(count), 10)))
+	}
+	latmin, lonmin := req.Msg.GetLatMin(), req.Msg.GetLonMin()
+	if !(-90 <= latmin && latmin < 90) {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("FibonacciCell: invalid latmin: "+strconv.FormatInt(int64(latmin), 10)))
+	}
+	if !(-180 <= lonmin && lonmin < 180) {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("FibonacciCell: invalid lonmin: "+strconv.FormatInt(int64(lonmin), 10)))
+	}
+
+	result := geo.FibonacciCell(uint(count), int(latmin), int(lonmin))
+
+	resp.Count = uint32(len(result))
+	resp.Min = &reconditematterv1.GeoPoint{Lat: float64(latmin), Lon: float64(lonmin)}
+	resp.Points = make([]*reconditematterv1.GeoPoint, len(result))
+	for k := range resp.Points {
+		resp.Points[k] = &reconditematterv1.GeoPoint{Lat: result[k].Lat, Lon: result[k].Lon}
+	}
 	return connect.NewResponse(resp), nil
 }
