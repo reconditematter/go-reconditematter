@@ -29,15 +29,17 @@ func FibonacciPoints(n uint) []Point {
 // FibonacciCell returns a quasi-uniform sequence
 // of _approximately_ n geographic points placed
 // on a Fibonacci grid in the geographic cell [lat,lat+1]x[lon,lon+1].
-//
-// Precondition: -90<=latmin<90 and -180<=lonmin<180;
-// otherwise a runtime panic occurs.
-func FibonacciCell(n uint, latmin, lonmin int) []Point {
-	if !(-90 <= latmin && latmin < 90) {
-		panic("FibonacciCell: invalid latmin")
+func FibonacciCell(n uint, origin Point) []Point {
+	latok, lonok := origin.Valid()
+	if !(latok && lonok) {
+		panic("FibonacciCell: invalid origin")
 	}
-	if !(-180 <= lonmin && lonmin < 180) {
-		panic("FibonacciCell: invalid lonmin")
+	latmin, lonmin := origin.Lat, origin.Lon
+	if latmin == 90 {
+		latmin = 89
+	}
+	if lonmin == 180 {
+		lonmin = 179
 	}
 	// compute 1x1 cell area
 	const S = 4 * math.Pi

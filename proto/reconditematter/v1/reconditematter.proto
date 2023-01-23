@@ -35,13 +35,12 @@ message FibonacciPointsResponse {
 
 message FibonacciCellRequest {
   uint32 count = 1;
-  int32 lat_min = 2;
-  int32 lon_min = 3;
+  GeoPoint origin = 2;
 }
 
 message FibonacciCellResponse {
   uint32 count = 1;
-  GeoPoint min = 2;
+  GeoPoint origin = 2;
   repeated GeoPoint points = 3;
 }
 

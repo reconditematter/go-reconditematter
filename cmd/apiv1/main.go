@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/google/uuid"
@@ -80,7 +79,7 @@ func (s *ReconditeMatterServer) RandomNames(
 	if count > maxCount {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			errors.New("RandomNames: invalid count: "+strconv.FormatUint(uint64(count), 10)))
+			errors.New("RandomNames: invalid count: "+req.Msg.String()))
 	}
 
 	result := randomnames.Generate(uint(count))
@@ -110,7 +109,7 @@ func (s *ReconditeMatterServer) FibonacciPoints(
 	if count > maxCount {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			errors.New("FibonacciPoints: invalid count: "+strconv.FormatUint(uint64(count), 10)))
+			errors.New("FibonacciPoints: invalid count: "+req.Msg.String()))
 	}
 
 	result := geo.FibonacciPoints(uint(count) / 2)
@@ -136,24 +135,21 @@ func (s *ReconditeMatterServer) FibonacciCell(
 	if count > maxCount {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			errors.New("FibonacciCell: invalid count: "+strconv.FormatUint(uint64(count), 10)))
+			errors.New("FibonacciCell: invalid count: "+req.Msg.String()))
 	}
-	latmin, lonmin := req.Msg.GetLatMin(), req.Msg.GetLonMin()
-	if !(-90 <= latmin && latmin < 90) {
+	origin := req.Msg.GetOrigin()
+	fibo := geo.Point{Lat: origin.GetLat(), Lon: origin.GetLon()}
+	latok, lonok := fibo.Valid()
+	if !(latok && lonok) {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			errors.New("FibonacciCell: invalid latmin: "+strconv.FormatInt(int64(latmin), 10)))
-	}
-	if !(-180 <= lonmin && lonmin < 180) {
-		return nil, connect.NewError(
-			connect.CodeInvalidArgument,
-			errors.New("FibonacciCell: invalid lonmin: "+strconv.FormatInt(int64(lonmin), 10)))
+			errors.New("FibonacciCell: invalid origin: "+req.Msg.String()))
 	}
 
-	result := geo.FibonacciCell(uint(count), int(latmin), int(lonmin))
+	result := geo.FibonacciCell(uint(count), fibo)
 
 	resp.Count = uint32(len(result))
-	resp.Min = &reconditematterv1.GeoPoint{Lat: float64(latmin), Lon: float64(lonmin)}
+	resp.Origin = origin
 	resp.Points = make([]*reconditematterv1.GeoPoint, len(result))
 	for k := range resp.Points {
 		resp.Points[k] = &reconditematterv1.GeoPoint{Lat: result[k].Lat, Lon: result[k].Lon}
