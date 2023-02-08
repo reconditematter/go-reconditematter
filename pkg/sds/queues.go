@@ -32,7 +32,7 @@ type Queue[T any] interface {
 var _ Queue[struct{}] = &boundedQueue[struct{}]{}
 
 type boundedQueue[T any] struct {
-	lock *sync.Mutex
+	lock sync.Mutex
 	elem []T
 	head int
 	peak int
