@@ -46,6 +46,7 @@ message FibonacciCellResponse {
 
 message GeoHashRequest {
   GeoPoint point = 1;
+  uint32 length = 2;
 }
 
 message GeoHashResponse {
