@@ -44,8 +44,17 @@ message FibonacciCellResponse {
   repeated GeoPoint points = 3;
 }
 
+message GeoHashRequest {
+  GeoPoint point = 1;
+}
+
+message GeoHashResponse {
+  string geohash = 1;
+}
+
 service ReconditeMatterService {
   rpc RandomNames(RandomNamesRequest) returns (RandomNamesResponse);
   rpc FibonacciPoints(FibonacciPointsRequest) returns (FibonacciPointsResponse);
   rpc FibonacciCell(FibonacciCellRequest) returns (FibonacciCellResponse);
+  rpc GeoHash(GeoHashRequest) returns (GeoHashResponse);
 }
