@@ -156,3 +156,32 @@ func (s *ReconditeMatterServer) FibonacciCell(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+func (s *ReconditeMatterServer) GeoHash(
+	ctx context.Context,
+	req *connect.Request[reconditematterv1.GeoHashRequest],
+) (*connect.Response[reconditematterv1.GeoHashResponse], error) {
+	resp := &reconditematterv1.GeoHashResponse{}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	point := req.Msg.GetPoint()
+	geopt := geo.Point{Lat: point.GetLat(), Lon: point.GetLon()}
+	latok, lonok := geopt.Valid()
+	if !(latok && lonok) {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("GeoHash: invalid point: "+req.Msg.String()))
+	}
+	length := req.Msg.GetLength()
+	if !(3 <= length && length <= 15) {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.New("GeoHash: invalid length: "+req.Msg.String()))
+	}
+
+	result := geo.GeoHash(geopt, uint(length))
+
+	resp.Geohash = result
+	return connect.NewResponse(resp), nil
+}
