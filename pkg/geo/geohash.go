@@ -10,9 +10,8 @@ import (
 //
 // See: https://en.wikipedia.org/wiki/Geohash
 //
-// The given length `n` is assumed to be n∈{3,5,7,9,11,13,15}.
+// The given length `n` is assumed to be 3≤n≤15.
 // When n<3, it is set to 3; when n>15, it is set to 15.
-// When n is an even number, it is set to the next odd number.
 func GeoHash(point Point, n uint) string {
 	latok, lonok := point.Valid()
 	if !(latok && lonok) {
@@ -24,9 +23,6 @@ func GeoHash(point Point, n uint) string {
 	}
 	if n > 15 {
 		n = 15
-	}
-	if n&1 == 0 {
-		n++
 	}
 
 	const gh = "0123456789bcdefghjkmnpqrstuvwxyz"
